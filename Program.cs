@@ -1,3 +1,4 @@
+using ImageDescriptionApp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +17,13 @@ builder.Services.AddSingleton<ComputerVisionService>(sp =>
     var endpoint = builder.Configuration["Azure:ComputerVision:Endpoint"];
     return new ComputerVisionService(apiKey, endpoint);
 });
+
+builder.Services.AddSingleton<GroqService>(sp =>
+{
+    var groqKey = builder.Configuration["Groq:ApiKey"];
+    return new GroqService(groqKey);
+});
+
 
 // Configura Swagger (se vuoi usare la documentazione API)
 builder.Services.AddEndpointsApiExplorer();
