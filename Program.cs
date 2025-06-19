@@ -1,3 +1,4 @@
+using ImageDescriptionApp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,6 +10,15 @@ builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnC
 // Aggiungi servizi al contenitore
 builder.Services.AddControllers();
 
+// Leggi la chiave API dal file `appsettings.json` o configurazione
+var hugApiKey = builder.Configuration["HuggingFace:ApiKey"];
+
+// Registrazione dei servizi nel contenitore DI
+builder.Services.AddSingleton<HuggingFaceService>(sp =>
+{
+    return new HuggingFaceService(hugApiKey);  // Passa la chiave API al costruttore
+});
+
 // Aggiungi il servizio ComputerVisionService con chiave API e endpoint dal file di configurazione
 builder.Services.AddSingleton<ComputerVisionService>(sp =>
 {
@@ -16,6 +26,10 @@ builder.Services.AddSingleton<ComputerVisionService>(sp =>
     var endpoint = builder.Configuration["Azure:ComputerVision:Endpoint"];
     return new ComputerVisionService(apiKey, endpoint);
 });
+
+
+builder.Services.AddSingleton<ImageDescriptionService>(); // Registrazione di ImageDescriptionService
+
 
 // Configura Swagger (se vuoi usare la documentazione API)
 builder.Services.AddEndpointsApiExplorer();
