@@ -1,5 +1,5 @@
 using ImageDescriptionApp;
-using ImageDescriptionApp.Services;
+//using ImageDescriptionApp.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using static Google.Rpc.Context.AttributeContext.Types;
@@ -7,7 +7,6 @@ using static Google.Rpc.Context.AttributeContext.Types;
 
 
 
-Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", @"C:\Users\grego\source\repos\ImageDescriptionApp\credentials\myKey.json");
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,23 +16,23 @@ builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnC
 // Aggiungi servizi al contenitore
 builder.Services.AddControllers();
 
-/*
+
 // Aggiungi il servizio ComputerVisionService con chiave API e endpoint dal file di configurazione
 builder.Services.AddSingleton<ComputerVisionService>(sp =>
 {
     var apiKey = builder.Configuration["Azure:ComputerVision:ApiKey"];
     var endpoint = builder.Configuration["Azure:ComputerVision:Endpoint"];
     return new ComputerVisionService(apiKey, endpoint);
-});*/
+});
 
-/*
+
 builder.Services.AddSingleton<GroqService>(sp =>
 {
     var groqKey = builder.Configuration["Groq:ApiKey"];
     return new GroqService(groqKey);
-});*/
+});
 
-builder.Services.AddSingleton<VisionService>();
+
 
 
 // Configura Swagger (se vuoi usare la documentazione API)

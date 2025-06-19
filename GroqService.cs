@@ -25,8 +25,8 @@ public class GroqService
                 model = "llama3-70b-8192",
                 messages = new[]
                 {
-                    new { role = "system", content = "Sei un assistente che riformula descrizioni di immagini in italiano in modo elegante, mantenendo fedelmente tutte le informazioni fornite." },
-                    new { role = "user", content = $"Riscrivi questa descrizione in italiano in modo più scorrevole e naturale, ma senza aggiungere dettagli non presenti: {basicDescription}" }
+                    new { role = "system", content = "Sei un assistente che riformula descrizioni di immagini in italiano in modo elegante, mantenendo fedelmente tutte le informazioni fornite. Le immagini raffigurano opere d'arte." },
+                    new { role = "user", content = $"Riscrivi questa descrizione in italiano in modo più scorrevole e naturale, ma senza aggiungere dettagli non presenti: {basicDescription}.Dai uno stile alla descrizione come se volessi descrivere un'opera d'arte." }
 
                      }
             };
