@@ -1,9 +1,13 @@
 ﻿using System.Threading.Tasks;
 using ImageDescriptionApp;
+using ImageDescriptionApp.Services;
 using Microsoft.AspNetCore.Mvc;
+using static Google.Rpc.Context.AttributeContext.Types;
 
 namespace YourNamespace.Controllers
 {
+
+    /*
     [Route("api/[controller]")]
     [ApiController]
     public class ImageController : ControllerBase
@@ -47,5 +51,35 @@ namespace YourNamespace.Controllers
                 return StatusCode(500, $"Error: {ex.Message}");
             }
         }
+    }*/
+
+
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ImageDescriptionController : ControllerBase
+    {
+        private readonly VisionService _visionService;
+
+        public ImageDescriptionController(VisionService visionService)
+        {
+            _visionService = visionService;
+        }
+
+        [HttpPost("describe")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> DescribeImage([FromForm] ImageUploadRequest request)
+        {
+            if (request.Image == null || request.Image.Length == 0)
+                return BadRequest("Nessun file caricato.");
+
+            using var stream = request.Image.OpenReadStream();
+            var description = await _visionService.DescribeImageAsync(stream);
+
+            return Ok(new { descrizione = description });
+        }
     }
 }
+
+
+
+
