@@ -23,7 +23,7 @@ public class ComputerVisionService
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _apiKey);
 
             // Endpoint per descrivere l'immagine
-            var url = $"{_endpoint}vision/v3.1/describe?maxCandidates=5";
+            var url = $"{_endpoint.TrimEnd('/')}/vision/v3.1/describe?maxCandidates=5";
 
             // Corpo della richiesta (passa l'URL dell'immagine)
             var body = new
