@@ -11,10 +11,17 @@ using static Google.Rpc.Context.AttributeContext.Types;
 var builder = WebApplication.CreateBuilder(args);
 
 // Carica la configurazione da appsettings.json
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+builder.Configuration.SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-// Aggiungi servizi al contenitore
-builder.Services.AddControllers();
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+
+builder.Services.AddTransient<ClarifaiClient>(provider =>
+{
+    var configuration = provider.GetRequiredService<IConfiguration>();
+    var clarifaiApiKey = configuration["Clarifai:ApiKey"];
+    Console.WriteLine("CLARIFAI KEY: " + clarifaiApiKey); // solo per debug, NON in produzione
+    return new ClarifaiClient(clarifaiApiKey);
+});
 
 
 // Aggiungi il servizio ComputerVisionService con chiave API e endpoint dal file di configurazione
@@ -31,6 +38,11 @@ builder.Services.AddSingleton<GroqService>(sp =>
     var groqKey = builder.Configuration["Groq:ApiKey"];
     return new GroqService(groqKey);
 });
+
+
+// Aggiungi servizi al contenitore
+builder.Services.AddControllers();
+
 
 
 
