@@ -17,6 +17,7 @@ public class GroqService
         _apiKey = apiKey;
     }
 
+    //attualmente questo metodo non è utilizzato, ma lo lascio per completezza
     public async Task<string> ImproveDescriptionAsync(string basicDescription)
     {
         using (var client = new HttpClient())
@@ -44,15 +45,26 @@ public class GroqService
         }
     }
 
-    public async Task<string> GenerateDescriptionFromTags(List<string> tags)
-    {
-        string prompt = $"Genera una descrizione di un'immagine che contiene: {string.Join(", ", tags)}.Non aggiungere elementi non presenti o dettagli non veri.La descrizione deve essere di 3 righe al massimo.Cerca di estrapolare dall'immagine le informazioni sul colore dell'oggetto, le sue dimensioni.";
+    // 
+    //Puoi usare la descrizione di Azure solo come riferimento di supporto, senza copiarla né amplificarla.
 
+    //metodo per generare una descrizione basata sui tag ottenuti da Clarifai
+    public async Task<string> GenerateDescriptionFromTags(ImageAnalysisResult analysis, String basicDescription)
+    {
+        /*
+        string prompt = $"Hai a disposizione due fonti per descrivere un'immagine: i tag di riconoscimento oggettivi: {string.Join(",", tags)}, e" +
+            $"la descrizione:{basicDescription}." +
+            $"Basati solo sui dati forniti per generare una descrizione oggettiva, evitando invenzioni o aggettivi inutili." +
+            $"Se puoi dedurre il colore principale o le caratteristiche visive dominanti, inseriscile. Cerca di indivduare le caratteristiche che contraddistinguono quell'immagine." +
+            $"La descrizione deve essere chiara, concisa e non superare le 3 righe." +
+            $"Producimi solo la descrizione senza aggiungere nient'altro." +
+            $"Se descrizione e tag sono discordanti basati solo sui tag.";
+        */
         var requestBody = new
         {
             messages = new[]
             {
-            new { role = "user", content = prompt }
+            new { role = "user", content = BuildPromptForGroq(analysis,basicDescription)}
         },
             model = "meta-llama/llama-4-scout-17b-16e-instruct" // o il modello Groq che stai usando
         };
@@ -71,5 +83,27 @@ public class GroqService
                   .GetProperty("message")
                   .GetProperty("content")
                   .GetString();
+    }
+
+
+
+
+    public string BuildPromptForGroq(ImageAnalysisResult analysis,String basicDescription)
+    {
+        var tags = string.Join(", ", analysis.Tags.Distinct());
+        var colors = string.Join(", ", analysis.Colors.Distinct());
+
+        var prompt = $@"
+            Hai a disposizione una serie di tag visivi e colori rilevati da un sistema di image recognition.
+
+            Tag rilevati: {tags}.
+            Colori principali: {colors}.
+            Inoltre hai a disposizione una descrizione di base dell'immagine: {basicDescription}.
+
+
+            Descrivi l’immagine in modo oggettivo, senza aggiungere dettagli inventati o aggettivi inutili. Deduci se possibile l’oggetto principale, il colore dominante e le caratteristiche visive più evidenti. La descrizione deve essere chiara e sintetica, massimo 3 righe.
+            ";
+
+        return prompt.Trim();
     }
 }

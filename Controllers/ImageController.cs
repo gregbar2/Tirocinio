@@ -40,25 +40,24 @@ namespace YourNamespace.Controllers
                 // Ottenere la descrizione da Clarifai
                 memoryStream.Position = 0; // Assicurati che il flusso sia riutilizzabile
                 var clarifaiRawJson = await _clarifaiClient.GetClarifaiRawResponse(memoryStream);
-                var tags = _clarifaiClient.GetTagsFromClarifaiJson(clarifaiRawJson);
-                var groqEnhancedDescription = await _groqService.GenerateDescriptionFromTags(tags);
-
-
-                // Riporta il puntatore all'inizio del MemoryStream per Clarifai
-                // memoryStream.Position = 0;
+                var analysisResult = _clarifaiClient.ParseDescriptionFromClarifaiJson(clarifaiRawJson);
+                memoryStream.Position = 0;
                 // Ottenere la descrizione base da Azure (Computer Vision)
-                //  var basicDescription = await _computerVisionService.GetImageDescriptionAsync(memoryStream);
+                var basicDescription = await _computerVisionService.GetImageDescriptionAsync(memoryStream);
 
-                // Migliorare la descrizione tramite Groq
-                //  var improvedDescription = await _groqService.ImproveDescriptionAsync(basicDescription);
+                var groqEnhancedDescription = await _groqService.GenerateDescriptionFromTags(
+                                                                    analysisResult,
+                                                                    basicDescription
+                                                                    );
+
 
                 // Restituire una risposta con le descrizioni da tutti i servizi
                 return Ok(new
                 {
-                    //   AzureDescription = basicDescription,
-                    //   ClarifaiDescription = clarifaiDescription,
+                    AzureDescription = basicDescription,
                     //  GroqEnhancedDescription = improvedDescription
-                    ClarifaiTags = tags,
+                    ClarifaiTags = analysisResult.Tags,
+                    ClarifaiColors = analysisResult.Colors,
                     GroqEnhancedDescription = groqEnhancedDescription
                 });
             }

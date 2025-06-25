@@ -1,11 +1,4 @@
 using ImageDescriptionApp;
-//using ImageDescriptionApp.Services;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using static Google.Rpc.Context.AttributeContext.Types;
-
-
-
 
 
 var builder = WebApplication.CreateBuilder(args);

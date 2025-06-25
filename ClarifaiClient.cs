@@ -17,7 +17,7 @@ public class ClarifaiClient
     }
 
     // Metodo per inviare l'immagine a Clarifai e ottenere la descrizione
-    public async Task<string> GetImageDescription(Stream imageStream)
+    public async Task<ImageAnalysisResult> GetImageDescription(Stream imageStream)
     {
         try
         {
@@ -29,16 +29,7 @@ public class ClarifaiClient
             // URL corretto per il modello "General" di Clarifai
             var url = "https://api.clarifai.com/v2/users/greg/apps/MyImageRecognitionApp/workflows/image-description-workflow/results";
 
-            // Crea la richiesta HTTP
-            /*
-            var request = new HttpRequestMessage(HttpMethod.Post, url)
-            {
-                Headers =
-                {
-                    // Aggiungi l'header di autenticazione con la chiave API
-                    Authorization = new AuthenticationHeaderValue("Bearer", apiKey)
-                }
-            };*/
+          
             var requestBody = new
             {
                 inputs = new[]
@@ -60,12 +51,6 @@ public class ClarifaiClient
 
             // Crea il contenuto della richiesta con l'immagine
 
-            /*
-            var content = new MultipartFormDataContent();
-            content.Add(new ByteArrayContent(imageBytes), "file", "image.jpg"); // Usa un nome di file adeguato
-
-            request.Content = content;
-            */
             var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Key", apiKey);
             request.Content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -77,7 +62,9 @@ public class ClarifaiClient
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadAsStringAsync();
-                return ParseDescriptionFromClarifaiJson(result); // Restituisce il risultato come stringa JSON
+                // return ParseDescriptionFromClarifaiJson(result); // Restituisce il risultato come stringa JSON
+                ImageAnalysisResult analysis = ParseDescriptionFromClarifaiJson(result);
+                return analysis; // Restituisce l'oggetto ImageAnalysisResult con i tag e i colori
             }
             else
             {
@@ -88,7 +75,11 @@ public class ClarifaiClient
         }
         catch (Exception ex)
         {
-            return $"Errore: {ex.Message}";
+            return new ImageAnalysisResult
+            {
+                Tags = new List<string> { $"Errore: {ex.Message}" },
+                Colors = new List<string>()
+            };
         }
     }
 
@@ -102,6 +93,8 @@ public class ClarifaiClient
         }
     }
 
+    //serve per estrarre la descrizione dai risultati JSON di Clarifai
+    /*
     private string ParseDescriptionFromClarifaiJson(string json)
     {
         try
@@ -129,8 +122,53 @@ public class ClarifaiClient
         {
             return "Errore nell'interpretazione della risposta Clarifai.";
         }
+    }*/
+    public ImageAnalysisResult ParseDescriptionFromClarifaiJson(string json)
+    {
+        var result = new ImageAnalysisResult();
+
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+
+        var outputs = root.GetProperty("results")[0].GetProperty("outputs");
+
+        foreach (var output in outputs.EnumerateArray())
+        {
+            var modelId = output.GetProperty("model").GetProperty("id").GetString();
+
+            // Estrai TAG dal visual-classifier
+            if (modelId == "general-image-recognition" || modelId == "visual-classifier")
+            {
+                if (output.TryGetProperty("data", out var data) &&
+                    data.TryGetProperty("concepts", out var concepts))
+                {
+                    foreach (var concept in concepts.EnumerateArray())
+                    {
+                        var name = concept.GetProperty("name").GetString();
+                        result.Tags.Add(name);
+                    }
+                }
+            }
+
+            // Estrai COLORI dal color-recognition
+            if (modelId == "color-recognition" || modelId == "image-color-recognizer")
+            {
+                if (output.TryGetProperty("data", out var data) &&
+                    data.TryGetProperty("colors", out var colors))
+                {
+                    foreach (var color in colors.EnumerateArray())
+                    {
+                        var name = color.GetProperty("w3c").GetProperty("name").GetString();
+                        result.Colors.Add(name);
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 
+    // Metodo per estrarre i tag dai risultati JSON di Clarifai
     public List<string> GetTagsFromClarifaiJson(string json)
     {
         var tags = new List<string>();
@@ -163,7 +201,7 @@ public class ClarifaiClient
     }
 
 
-
+    // Metodo per ottenere la risposta grezza da Clarifai, utile per debugging o analisi avanzata
     public async Task<string> GetClarifaiRawResponse(Stream imageStream)
     {
         try
